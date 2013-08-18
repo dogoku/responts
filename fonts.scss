@@ -1,0 +1,130 @@
+///**
+// * Responsive Font Size Classes
+// */
+
+//The base font size for rem
+//If you are developing for mobile first, this should be the SMALLEST font size
+$base-font-size: 12px!default;
+
+//Media Query Breakpoints list with base font size
+//Param 1 - Media Query Namespace
+//Param 2 - Media Query Declaration
+//Param 3 - Base Font size in px. Set to false if no font size change.
+//			Avoid using the same size as $base-font-size
+$breakpoints: (
+	'small' '(min-width: 400px)' 14px,
+	'medium' '(min-width: 481px)' 16px,
+	'large' '(min-width: 600px)' false
+)!default;
+
+//Declare your size classes
+$size-classes: (
+	'text-x-x-small' 0.625,
+	'text-x-small' 0.75,
+	'text-small' 0.875,
+	'text-medium' 1,
+	'text-large' 1.25,
+	'text-x-large' 1.625,
+	'text-double' 2,
+	'text-x-x-large' 2.125,
+	'text-triple' 3
+)!default;
+
+//include fallback for rem (in pixels)
+$rem-fallback: true;
+
+//'%' generates silent classes(extend only placeholders)
+//'.' generates normal CSS classes
+$class-type: unquote('%');
+
+//Converts a rem (number part only) to pixels, given a base pixel size
+@function rem-to-px($ratio,$size) {
+	@return $size * $ratio;
+}
+
+//returs both a rem and a px based property
+@mixin rem-property ($property, $ratio, $size) {
+	#{$property}: rem-to-px($ratio,$size);
+	#{$property}: #{$ratio}rem;
+}
+
+//generates classes with px fallbacks
+@mixin px-rem-sizes ($size) {
+	@each $class in $size-classes {
+		$name: nth($class, 1);
+		$ratio: nth($class,2);
+
+		#{$class-type}#{$name} {
+			@include rem-property("font-size", $ratio, $size);
+		}
+	}
+}
+
+//generates only the rem classes
+@mixin rem-only-sizes () {
+	@each $class in $size-classes {
+		$name: nth($class, 1);
+		$ratio: nth($class,2);
+
+		#{$class-type}#{$name} {
+			font-size: #{$ratio}rem;
+		}
+	}
+}
+
+//Private
+//generates classes for a single media qeuery
+//if $withHtml is specified, it will also generate the rules for the html (root)
+@mixin generate-size-classes ($mq: false, $size: 16px, $withHtml:false) {
+	//small base font-size
+
+	@if ($mq == false) {
+
+		@if ($withHtml == true){
+			html {
+				font-size: $size;
+			}
+		}
+
+		@if ($rem-fallback == true) {
+			@include px-rem-sizes($size);
+		} @else {
+			@include rem-only-sizes();
+		}
+
+	} @else {
+
+		@if ($rem-fallback == true) {
+			@media only screen and #{$mq} {
+				@if ($withHtml == true){
+					html {font-size: $size;}
+				}
+				@include px-rem-sizes($size);
+			}
+		} @else {
+			@if ($withHtml == true){
+				@media only screen and #{$mq} {
+					html {font-size: $size;}
+				}
+			}
+		}
+
+	}
+}
+
+//this mixin is h
+//if $withHtml is specified, it will also generate the rules for the html (root)
+@mixin load-font-sizes ($withHtml: false) {
+
+	//generate root
+	@include generate-size-classes(false, 12px, $withHtml);
+
+	@each $breakpoint in $breakpoints {
+		$declaration: nth($breakpoint, 2);
+		$size: nth($breakpoint, 3);
+
+		@if ($size != false) {
+			@include generate-size-classes($declaration, $size, $withHtml);
+		}
+	}
+}
